@@ -1,5 +1,7 @@
-__author__ = 'Adam'
+import concurrent.futures
+import math
 
+__author__ = 'apothem'
 
 """ Project Euler problem #3: prime factors
 The prime factors of 13195 are 5, 7, 13 and 29. What is the largest prime factor of the number 600851475143?
@@ -11,67 +13,62 @@ Generate a list of all prime numbers, from the biggest prime <= target, to 2
 
 Test each prime from biggest to smallest, to see if it's a factor of target
 The first prime that IS a factor of the target is the biggest prime factor! Return it.
-
-Way to do it with less memory:
-    Manually add 2 to primes, never generate any multiples of 2
-    Only generate 200,000 or so entries of 'numbers' at any one time
-    Sieve those entries, add the sieved entries to a lookup table
-    Continue generating the entries and sieving until the entire list has been sieved
-
-    Add the first member of the sieved lookup table to primes; it is prime
-    Sieve the lookup table again, 200,000 or so at a time
-    Lather, rinse, repeat
 '''
+global_target = 600851475143                                                    # ugly but it works
 
-class Memoize(object):          # ?????????????
-    def __init__(self, f):
-        self.f = f
-        self.memo = {}
+def is_prime(n):                                                                # better prime checker code
+    if n % 2 == 0:                                                              # doesn't mark 2 as prime,
+        return False                                                            # but for this application it's OK
 
-    def __call__(self, *args):
-        if not args in self.memo:
-            self.memo[args] = self.f(*args)
-        return self.memo[args]
-
-class Euler3(object):
-    def __init__(self, target):
-        self.target = int(target)
-        self.numbers = [x for x in range(2, self.target + 1)]       #this is a very bad idea
-        self.primes = []
-
-    def sieve(self):
-        self.primes.append(self.numbers.pop(0))
-        n = 0
-
-        while n < len(self.numbers):
-            if self.numbers[n] % self.primes[-1] == 0:
-                del self.numbers[n]
-            else:
-                n += 1
-
-    def make_primes(self):
-        print ("Running prime maker...")
-        Euler3.sieve(self)
-        while self.primes[-1] ** 2 < self.target:
-            Euler3.sieve(self)
-        self.primes += self.numbers
-
-    def biggest_prime_factor(self):
-        Euler3.make_primes(self)
-        print ("Made primes.")
-
-        sorted_primes = sorted(self.primes, reverse=True)
-        print (sorted_primes)
-        biggest_prime = int(sorted_primes.pop(0))
-        print ("Running factor checking...")
-
-        while len(sorted_primes) > 0:
-            if self.target % biggest_prime == 0:
-                print ("Found biggest factor!")
-                return biggest_prime
-            elif self.target % biggest_prime != 0:
-                biggest_prime = sorted_primes.pop(0)
+    sqrt_n = int(math.floor(math.sqrt(n)))
+    for i in range(3, sqrt_n + 1, 2):
+        if n % i == 0:
+            return False
+    return True
 
 
-euler3 = Euler3(600851475143)
-euler3.biggest_prime_factor()
+def make_primes(target, span):
+    print ("Running prime maker...\n")
+    PRIMES = [x for x in range(target, (target - span), -1)]                    # still a bad idea
+
+    primeslist = open('primes.txt', 'w')
+    with concurrent.futures.ProcessPoolExecutor() as executor:                  # black sorcery from the Python docs
+        for number, prime in zip(PRIMES, executor.map(is_prime, PRIMES)):       # breaks if it isn't executed using
+            if prime:                                                           # if __name__ == '__main__':
+                primeslist.write(str(number) + "\n")
+                #print ("Found prime: {}".format(number))
+    primeslist.close()
+    print ("Made primes.")
+
+
+def find_bpf(target, span):
+    found_bpf = False
+
+    print ("Finding biggest prime factor of {:d} with span {:d}...".format(target, span))
+    make_primes(target=target, span=span)
+    print ("Running factor tests...")
+
+    with open('primes.txt', 'r') as infile:
+        for line in infile.readlines():
+            candidate = int(line)
+            if global_target % candidate == 0:
+                print ("Found the biggest prime factor: {:d}!".format(candidate))
+                found_bpf = True
+                return found_bpf
+        if not found_bpf:
+            print ("Couldn't find the biggest prime factor. :(\n")
+            found_bpf = False
+            return found_bpf
+
+
+if __name__ == '__main__':
+    target = global_target
+    span = 100000
+    new_target = target
+    print ("Biggest Prime Factor Finder 9000:")
+
+    done = find_bpf(target=target, span=span)
+    while not done:
+        new_target = (new_target - span)
+        print ("Searching again with new target {:d} and span {:d}.".format(new_target, span))
+        done = find_bpf(target=new_target, span=span)

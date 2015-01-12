@@ -14,6 +14,7 @@ Generate a list of all prime numbers, from the biggest prime <= target, to 2
 Test each prime from biggest to smallest, to see if it's a factor of target
 The first prime that IS a factor of the target is the biggest prime factor! Return it.
 '''
+
 global_target = 600851475143                                                    # ugly but it works
 
 def is_prime(n):                                                                # better prime checker code
@@ -62,13 +63,17 @@ def find_bpf(target, span):
 
 
 if __name__ == '__main__':
-    target = global_target
+    target = math.floor(global_target / 2)
     span = 100000
     new_target = target
+    count = 0
     print ("Biggest Prime Factor Finder 9000:")
 
-    done = find_bpf(target=target, span=span)
+    done = find_bpf(target=global_target, span=span)
+    count += 1
     while not done:
         new_target = (new_target - span)
         print ("Searching again with new target {:d} and span {:d}.".format(new_target, span))
+        print ("Searched {:d} times so far, for numbers from {:d} to {:d}.".format(count, global_target, (global_target - target - (count * span))))
         done = find_bpf(target=new_target, span=span)
+        count += 1

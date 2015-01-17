@@ -27,26 +27,46 @@ Find the thirteen adjacent digits in the 1000-digit number that have the greates
 71636269561882670428252483600823257530420752963450
 '''
 
-big_miclargehuge = []                               # is a list, do slicing and duck-type for product tests
-
+big_mclargehuge = []                               # is a list, do slicing and duck-type for product tests
 
 def read_big_mclargehuge():
     with open('mclargehuge.txt', 'r') as infile:
-        for line in infile.readlines():
-            big_miclargehuge.append(line.strip())
-#    print (big_miclargehuge)
-#    print (type(big_miclargehuge))
+        for line in infile.read():
+            big_mclargehuge.append(int(line.strip()))
 
 
 def get_digits(start, stop):
-    digits = 0
-    digits = # ?????????? find list slicing syntax
-    print (digits)
+    return big_mclargehuge[start:stop]
 
 
-def euler8():
+def get_product(candidate):
+    product = 1                                     # can't be 0 at first
+    for x in range(0, len(candidate), 1):
+        product *= candidate[x]
+    return product
+
+
+def euler8():                                       # 7316717653133 is the first bit with product 5000940
     read_big_mclargehuge()
-    get_digits(start=0, stop=13)
 
+    def make_product(start, stop):
+        digits = get_digits(start=start, stop=stop)
+        product = get_product(candidate=digits)
+
+        if product > biggest_product:
+            print ("Found new biggest product {} for digits {}, at indices {}-{}".format(product, digits, start, stop))
+        return product
+
+    start = 0
+    stop = 13
+    biggest_product = 0
+
+    while stop <= len(big_mclargehuge):
+        current_product = make_product(start=start, stop=stop)
+
+        if current_product > biggest_product:
+            biggest_product = current_product
+        start += 1; stop += 1
+    return biggest_product
 
 euler8()
